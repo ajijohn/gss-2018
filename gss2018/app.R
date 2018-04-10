@@ -12,8 +12,9 @@ library(leaflet)
 library(htmltools)
 library(htmlwidgets)
 library(raster)
+library(sp)
 #library(virtualspecies)
-
+library(RColorBrewer)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -25,11 +26,11 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
-  r <- raster(xmn=-2.8, xmx=-2.79, ymn=54.04, ymx=54.05, nrows=30, ncols=30)
-  values(r) <- matrix(1:900, nrow(r), ncol(r), byrow = TRUE)
-  crs(r) <- CRS("+init=epsg:4326")
+ 
   
-  worldclim <- getData("worldclim", var = "bio", res = 2.5)
+  tmean_raster <- raster(file.path(getwd(), "wc2/MOD11C1_D_LSTDA_2017-03-27_rgb_3600x1800.TIFF"))
+ 
+  pal <- colorNumeric("RdYlBu", values(tmean_raster), na.color = "transparent")
   
   map =  leaflet() %>%
     addProviderTiles(providers$Esri.WorldStreetMap) %>%
@@ -50,11 +51,12 @@ server <- function(input, output) {
       var myMap = this;
       myMap.on('moveend',
         function (e) {
-          alert('changed')
+          //alert('changed')
 
         })
     }")%>%
-    addRasterImage(r, colors = "Spectral", opacity = 0.8)
+    addRasterImage(tmean_raster, colors = "Spectral", opacity = 0.8) %>%
+    addLegend(pal = pal, values = values(tmean_raster), title = "Mean Temp.")
   
   output$myMap = renderLeaflet(map)
 }
